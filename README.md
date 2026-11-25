@@ -1,6 +1,6 @@
 # xbox-cloud-save-downloader
 
-A standalone, strictly **read-only** Windows tool that downloads **your own** Xbox PC / PC Game Pass cloud saves directly from Xbox Connected Storage (`titlestorage.xboxlive.com`) — even if the game is no longer installed or your Game Pass subscription has ended.
+A standalone, strictly **read-only** Windows tool that downloads **your own** Xbox PC / PC Game Pass cloud saves directly from Xbox Connected Storage (`titlestorage.xboxlive.com`) even if the game is no longer installed or your Game Pass subscription has ended.
 
 ---
 
@@ -71,8 +71,8 @@ This tool talks directly to the same official Xbox Live HTTPS endpoints in four 
    - Uses Microsoft's standard OAuth 2.0 Device Code flow (`login.live.com`) so you sign in on Microsoft's own website.
    - Generates a local ECDSA P-256 keypair and signs requests to `device.auth.xboxlive.com`, `user.auth.xboxlive.com`, and `xsts.auth.xboxlive.com` to obtain an `XSTS` token bound to a `DeviceToken`. *(Standard user-only XSTS tokens are rejected by Connected Storage with `HTTP 403`; a Proof-of-Possession `DeviceToken` is what makes read access work without scraping Windows Credential Manager.)*
 2. **Discover your games dynamically (Title Hub)**
-   - Calls `GET https://titlehub.xboxlive.com/users/xuid({xuid})/titles/titlehistory/...` to fetch your play history and resolve each game's `TitleId`, Service Configuration ID (`SCID`), and `PackageFamilyName` (`PFN`) — no hardcoded game lists required.
-3. **Read cloud save containers and atoms (Connected Storage — `GET` only)**
+   - Calls `GET https://titlehub.xboxlive.com/users/xuid({xuid})/titles/titlehistory/...` to fetch your play history and resolve each game's `TitleId`, Service Configuration ID (`SCID`), and `PackageFamilyName` (`PFN`) - no hardcoded game lists required.
+3. **Read cloud save containers and atoms (Connected Storage / `GET` only)**
    - Lists your save containers: `GET https://titlestorage.xboxlive.com/connectedstorage/users/xuid({xuid})/scids/{scid}`
    - Fetches each container's atom map: `GET .../scids/{scid}/{encoded_fileName}`
    - Downloads each raw binary save atom: `GET .../scids/{scid}/{atom_id}` (e.g. `<GUID>,binary`)
@@ -106,7 +106,7 @@ Every export writes both a human-readable `reconstructed/` folder and a standard
 Any game in your Xbox Title Hub history that stores saves in Xbox Connected Storage (PC Game Pass, Microsoft Store, and Play Anywhere titles) can be discovered and downloaded. Games that use a publisher's own cloud servers instead of Xbox Connected Storage will show no Connected Storage blobs.
 
 **Is this safe for my Xbox account?**  
-The storage client is strictly read-only (`GET` only — no write, delete, or lock-breaking requests exist in the codebase). You sign in directly on `https://www.microsoft.com/link` (never typing your password into this app), tokens remain local on your PC, and GitHub Releases are compiled automatically by GitHub Actions from the exact source in this repository.
+The storage client is strictly read-only (`GET` only; no write, delete, or lock-breaking requests exist in the codebase). You sign in directly on `https://www.microsoft.com/link` (never typing your password into this app), tokens remain local on your PC, and GitHub Releases are compiled automatically by GitHub Actions from the exact source in this repository.
 
 ---
 
@@ -125,14 +125,12 @@ python -m venv .venv
 .\scripts\build_exe.ps1
 ```
 
-Pushing a version tag (e.g. `git tag v0.1.0 && git push origin v0.1.0`) triggers [`.github/workflows/release.yml`](.github/workflows/release.yml) to build `xbox-save-harvest.exe` + `SHA256SUMS.txt` on `windows-latest` and publish a GitHub Release automatically.
-
 ---
 
 ## References
 
 This project was written from scratch in Python using protocol findings and prior research from the following open-source repositories:
 
-- **[billynothingelse/xbcsmgr](https://github.com/billynothingelse/xbcsmgr)** *(archived .NET 7 project)* — Key reference for Xbox Connected Storage (`titlestorage.xboxlive.com`) endpoints, `x-xbl-contract-version: 107`, `x-xbl-pfn` headers, and Title Hub (`titlehub.xboxlive.com`) discovery. Unlike `xbcsmgr`, this tool uses pure interactive OAuth instead of scraping Windows Credential Manager, preserves `Win32` titles during discovery, and strictly omits all lock/write/delete operations.
-- **[AlphaBs/XboxAuthNet](https://github.com/AlphaBs/XboxAuthNet)** *(MIT .NET library)* — Reference for Microsoft OAuth Device Code authentication, ECDSA P-256 Proof-of-Possession request signing (`Signature` header with Windows FILETIME + raw 64-byte IEEE P1363 `r || s`), and the Xbox Device Token → User Token → XSTS authorization flow.
-- **[vinifreitaspaulino/mc-xbox-dl](https://github.com/vinifreitaspaulino/mc-xbox-dl)** *(Python Connected Storage tool)* — Reference for Python Connected Storage API behavior, error-code semantics (`HTTP 403 code 2011` vs `HTTP 404 code 2005`), and raw atom downloads.
+- **[billynothingelse/xbcsmgr](https://github.com/billynothingelse/xbcsmgr)** *(archived .NET 7 project)* - Key reference for Xbox Connected Storage (`titlestorage.xboxlive.com`) endpoints, `x-xbl-contract-version: 107`, `x-xbl-pfn` headers, and Title Hub (`titlehub.xboxlive.com`) discovery. Unlike `xbcsmgr`, this tool uses pure interactive OAuth instead of scraping Windows Credential Manager, preserves `Win32` titles during discovery, and strictly omits all lock/write/delete operations.
+- **[AlphaBs/XboxAuthNet](https://github.com/AlphaBs/XboxAuthNet)** *(MIT .NET library)* - Reference for Microsoft OAuth Device Code authentication, ECDSA P-256 Proof-of-Possession request signing (`Signature` header with Windows FILETIME + raw 64-byte IEEE P1363 `r || s`), and the Xbox Device Token → User Token → XSTS authorization flow.
+- **[vinifreitaspaulino/mc-xbox-dl](https://github.com/vinifreitaspaulino/mc-xbox-dl)** *(Python Connected Storage tool)* - Reference for Python Connected Storage API behavior, error-code semantics (`HTTP 403 code 2011` vs `HTTP 404 code 2005`), and raw atom downloads.
