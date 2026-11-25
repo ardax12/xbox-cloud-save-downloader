@@ -91,6 +91,25 @@ This tool talks directly to the same official Xbox Live HTTPS endpoints in four 
 
 ---
 
+## FAQ
+
+**Can I download PC Game Pass saves after my subscription expires or a game leaves Game Pass?**  
+Yes. Microsoft continues storing your cloud saves on Xbox Connected Storage even when you no longer have an active Game Pass subscription or store entitlement to install the game.
+
+**Do I need the game installed to extract my Xbox cloud saves?**  
+No. Saves are downloaded directly from Microsoft's cloud (`titlestorage.xboxlive.com`), so you never have to re-download 50–100+ GB just to trigger a local Xbox app sync.
+
+**How do I transfer downloaded Game Pass saves to Steam?**  
+Every export writes both a human-readable `reconstructed/` folder and a standard Windows Gaming Services `wgs/` folder (`containers.index` + `container.1` + raw atom files). For games with identical PC save formats, copy and rename the payload from `reconstructed/`; for games that split saves into chunks or embed Xbox headers/footers (such as Starfield or Yakuza/Like a Dragon), pass the exported `wgs/` folder into a community Game Pass → Steam converter like `XGP-save-extractor` or `XgpSaveTools`.
+
+**Does this work for Xbox Play Anywhere / console saves?**  
+Any game in your Xbox Title Hub history that stores saves in Xbox Connected Storage (PC Game Pass, Microsoft Store, and Play Anywhere titles) can be discovered and downloaded. Games that use a publisher's own cloud servers instead of Xbox Connected Storage will show no Connected Storage blobs.
+
+**Is this safe for my Xbox account?**  
+The storage client is strictly read-only (`GET` only — no write, delete, or lock-breaking requests exist in the codebase). You sign in directly on `https://www.microsoft.com/link` (never typing your password into this app), tokens remain local on your PC, and GitHub Releases are compiled automatically by GitHub Actions from the exact source in this repository.
+
+---
+
 ## Building From Source
 
 Requires Windows 10/11 and Python 3.12+:
