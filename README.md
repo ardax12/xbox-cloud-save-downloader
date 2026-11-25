@@ -2,6 +2,8 @@
 
 A standalone, strictly **read-only** Windows tool that downloads **your own** Xbox PC / PC Game Pass cloud saves directly from Xbox Connected Storage (`titlestorage.xboxlive.com`) even if the game is no longer installed or your Game Pass subscription has ended.
 
+<img width="1918" height="968" alt="output" src="https://github.com/user-attachments/assets/9baaf27b-28e7-43de-bfeb-b7a81590374a" />
+
 ---
 
 ## How to Use
