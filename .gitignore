@@ -1,0 +1,34 @@
+# Python & Packaging
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.spec
+*.exe
+SHA256SUMS.txt
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+
+# IDE, OS & test caches
+.idea/
+.vscode/
+.pytest_cache/
+Thumbs.db
+desktop.ini
+
+# Local credentials, sessions, and downloaded saves
+.env
+.env.*
+.local_cache/
+session.json
+*token*.json
+saves_output/
+
+# Local-only docs, tests, and agent rules
+docs/
+tests/
+AGENTS.md

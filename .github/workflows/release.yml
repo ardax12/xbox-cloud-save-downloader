@@ -1,0 +1,88 @@
+name: Build & Publish Windows Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Optional release tag (e.g. v0.1.0). Leave empty to only build and upload artifacts."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          if (Test-Path tests) {
+            python -m pip install -e ".[dev,build]"
+          } else {
+            python -m pip install -e ".[build]"
+          }
+
+      - name: Run unit tests (if present)
+        shell: pwsh
+        run: |
+          if (Test-Path tests) {
+            python -m pytest -v
+          } else {
+            Write-Host "No tests/ directory in repository; skipping pytest."
+          }
+
+      - name: Build xbox-save-harvest.exe
+        shell: pwsh
+        run: .\scripts\build_exe.ps1 -PythonExe python
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: xbox-save-harvest-windows-x64
+          path: dist/release/*
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.tag != '')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $Tag = if ("${{ github.event_name }}" -eq "workflow_dispatch") { "${{ inputs.tag }}" } else { "${{ github.ref_name }}" }
+          $Notes = @'
+          Standalone Windows release of **xbox-cloud-save-downloader** (no Python required).
+
+          ### How to Use
+          1. Download **`xbox-save-harvest.exe`** below.
+          2. **Double-click** it to launch the guided save exporter (or run `xbox-save-harvest.exe --help` in Terminal for CLI flags).
+          3. Sign in via Microsoft's browser link (`https://www.microsoft.com/link`), pick your game(s), and choose where to save them.
+
+          ### Safety & Verification
+          - Strictly **read-only** (`GET`-only) on Xbox Connected Storage — never modifies or deletes cloud saves.
+          - All tokens stay local in `%LOCALAPPDATA%\PcGamepassSaveHarvest\session.json`.
+          - Unsigned Windows executables may trigger Windows SmartScreen (*More info -> Run anyway*). Compare your download against `SHA256SUMS.txt` or inspect this release's GitHub Actions build log.
+          '@
+
+          $NotesFile = Join-Path $env:TEMP "release-notes.md"
+          Set-Content -Path $NotesFile -Value $Notes -Encoding utf8
+
+          gh release view $Tag 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $Tag dist/release/* --clobber
+          } else {
+            gh release create $Tag dist/release/* --title "xbox-cloud-save-downloader $Tag" --notes-file $NotesFile --generate-notes
+          }
